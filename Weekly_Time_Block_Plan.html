@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Time Block Plan</title>
+<style>
+:root {
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #5f5e5a;
+  --color-text-tertiary: #9a9896;
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4f0;
+  --color-border-tertiary: rgba(0,0,0,0.10);
+  --color-border-secondary: rgba(0,0,0,0.18);
+  --color-border-primary: rgba(0,0,0,0.28);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: #f0eeea;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.card {
+  background: var(--color-background-primary);
+  border-radius: var(--border-radius-lg);
+  border: 0.5px solid var(--color-border-tertiary);
+  padding: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.stat {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 10px 12px;
+}
+
+.stat-val {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 6px 14px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-sans);
+  transition: background 0.15s;
+}
+
+.tab:hover { background: var(--color-background-secondary); }
+
+.tab.active {
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-primary);
+  font-weight: 500;
+}
+
+.day-view { display: none; }
+.day-view.active { display: block; }
+
+.timeline { display: flex; flex-direction: column; gap: 3px; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 14px 0 6px;
+  padding-left: 4px;
+}
+
+.slot {
+  display: flex;
+  align-items: stretch;
+  min-height: 36px;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  border: 0.5px solid var(--color-border-tertiary);
+}
+
+.slot-time {
+  width: 76px;
+  min-width: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  background: var(--color-background-secondary);
+  border-right: 0.5px solid var(--color-border-tertiary);
+  padding: 4px 6px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.slot-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.slot-label { font-size: 12px; font-weight: 500; }
+.slot-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 1px; }
+
+.bg-sleep { background: #F1EFE8; } .bg-sleep .slot-label { color: #444441; }
+.bg-work  { background: #E6F1FB; } .bg-work  .slot-label { color: #0C447C; }
+.bg-cfa   { background: #FAEEDA; } .bg-cfa   .slot-label { color: #633806; }
+.bg-gym   { background: #E1F5EE; } .bg-gym   .slot-label { color: #085041; }
+.bg-morning { background: #EEEDFE; } .bg-morning .slot-label { color: #3C3489; }
+.bg-hair  { background: #FBEAF0; } .bg-hair  .slot-label { color: #72243E; }
+.bg-free  { background: #ffffff; border: 0.5px solid var(--color-border-tertiary); } .bg-free .slot-label { color: var(--color-text-secondary); }
+.bg-nonneg { background: #EAF3DE; } .bg-nonneg .slot-label { color: #27500A; }
+
+.dot-sleep   { background: #888780; }
+.dot-work    { background: #378ADD; }
+.dot-cfa     { background: #BA7517; }
+.dot-gym     { background: #1D9E75; }
+.dot-morning { background: #7F77DD; }
+.dot-hair    { background: #D4537E; }
+.dot-free    { background: #B4B2A9; }
+.dot-nonneg  { background: #639922; }
+
+.note {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 8px 12px;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+.legend {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 0.5px solid var(--color-border-tertiary);
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <h1>Weekly time block plan</h1>
+  <p class="subtitle">CFA exam in <span id="subtitle-countdown">~85</span> days · 4h weekdays · 5h+ weekends</p>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="phase-label">—</div><div class="stat-label" id="phase-sub">current phase</div></div>
+    <div class="stat"><div class="stat-val">4h</div><div class="stat-label">CFA / weekday</div></div>
+    <div class="stat"><div class="stat-val">5h+</div><div class="stat-label">CFA / weekend day</div></div>
+    <div class="stat"><div class="stat-val">~32h</div><div class="stat-label">CFA / week total</div></div>
+    <div class="stat"><div class="stat-val" id="days-countdown">84d</div><div class="stat-label">to exam</div></div>
+  </div>
+
+  <div class="tabs" id="tab-bar">
+    <button class="tab active" onclick="show('wd', this)">Weekday</button>
+    <button class="tab" onclick="show('sat', this)">Saturday</button>
+    <button class="tab" onclick="show('sun', this)">Sunday</button>
+  </div>
+
+  <!-- WEEKDAY -->
+  <div id="wd" class="day-view active">
+    <div class="section-label">Morning</div>
+    <div class="timeline">
+      <div class="slot bg-sleep"><div class="slot-time">Before 6am</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Sleep</div><div class="slot-sub">Target: asleep by 11pm, wake by 6am</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">6:00–6:20</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wake-up ritual</div><div class="slot-sub">Cold plunge, hydration, quick stretch, freshen up, no phone</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">6:20–9:20</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 1 — 6 pomodoros</div><div class="slot-sub" id="wd-cfa1-sub">25-5-25-5 · 150 min focused study</div></div></div></div>
+      <div class="slot bg-gym"><div class="slot-time">9:20–9:50</div><div class="slot-content"><div class="dot dot-gym"></div><div><div class="slot-label">Gym / exercise</div><div class="slot-sub">25–30 min · compress to 15 min on heavy days</div></div></div></div>
+      <div class="slot bg-hair"><div class="slot-time">9:50–10:00</div><div class="slot-content"><div class="dot dot-hair"></div><div><div class="slot-label">Haircare + skincare AM routine</div><div class="slot-sub">Habit stack with shower post-gym</div></div></div></div>
+    </div>
+
+    <div class="section-label">Work hours</div>
+    <div class="timeline">
+      <div class="slot bg-work"><div class="slot-time">10:00–1:00</div><div class="slot-content"><div class="dot dot-work"></div><div><div class="slot-label">Work block 1</div><div class="slot-sub">Deep work, meetings, research</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">1:00–1:45</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Lunch + rest</div><div class="slot-sub">Eat well · hydration · 10 min walk if possible</div></div></div></div>
+      <div class="slot bg-work"><div class="slot-time">1:45–7:00</div><div class="slot-content"><div class="dot dot-work"></div><div><div class="slot-label">Work block 2</div><div class="slot-sub">Lighter tasks + wrap-up toward end</div></div></div></div>
+    </div>
+
+    <div class="section-label">Evening</div>
+    <div class="timeline">
+      <div class="slot bg-cfa"><div class="slot-time">7:15–9:15</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 2 — 4 pomodoros</div><div class="slot-sub" id="wd-cfa2-sub">25-5-25-5 · 100 min focused study</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">9:15–10:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Dinner + decompress</div><div class="slot-sub">No screens during eating · light conversation</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">10:00–10:30</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Free / flexible</div><div class="slot-sub">Music practice · reading · learning · football videos · friends</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">10:30–11:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wind-down ritual</div><div class="slot-sub">No screens · journal / gratitude · haircare + skincare PM routine</div></div></div></div>
+      <div class="slot bg-sleep"><div class="slot-time">11:00pm</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Lights out</div><div class="slot-sub">Target hard stop — protect morning wake time</div></div></div></div>
+    </div>
+    <div class="note">On office commute days: use travel time for CFA audio/flashcards. Shift gym to evening if morning commute eats the slot. CFA block 1 can compress to 4 pomodoros (100 min) on those days.</div>
+  </div>
+
+  <!-- SATURDAY -->
+  <div id="sat" class="day-view">
+    <div class="section-label">Morning — study-heavy</div>
+    <div class="timeline">
+      <div class="slot bg-sleep"><div class="slot-time">Before 6am</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Sleep</div><div class="slot-sub">Same 11pm–6am target as weekdays</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">6:00–6:20</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wake-up ritual</div><div class="slot-sub">Cold plunge, hydration, quick stretch, freshen up, no phone</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">6:20–9:20</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 1 — 6 pomodoros</div><div class="slot-sub" id="sat-cfa1-sub">25-5-25-5 · 150 min focused study</div></div></div></div>
+      <div class="slot bg-gym"><div class="slot-time">9:20–10:20</div><div class="slot-content"><div class="dot dot-gym"></div><div><div class="slot-label">Gym / exercise</div><div class="slot-sub">60 min · full workout · longer weekend session</div></div></div></div>
+      <div class="slot bg-hair"><div class="slot-time">10:20–12:00</div><div class="slot-content"><div class="dot dot-hair"></div><div><div class="slot-label">Haircare + skincare deep routine + shower</div><div class="slot-sub">Oil / mask / treatment — longer weekend version</div></div></div></div>
+    </div>
+
+    <div class="section-label">Afternoon — second study block</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">12:00–1:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Lunch + rest</div><div class="slot-sub">Proper meal · hydration · short mental break</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">1:00–3:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 2 — 4 pomodoros</div><div class="slot-sub" id="sat-cfa2-sub">25-5-25-5 · 100 min focused study</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">3:00–5:00</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Free / errands</div><div class="slot-sub">Finance admin tasks · chores · personal errands</div></div></div></div>
+    </div>
+
+    <div class="section-label">Evening — lighter study</div>
+    <div class="timeline">
+      <div class="slot bg-free"><div class="slot-time">5:00–7:00</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Social / fun / music</div><div class="slot-sub">Friends · sports · music practice · flexible</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Dinner</div><div class="slot-sub">Family / friends / cook something decent</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">8:00–10:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 3 — 4 pomodoros</div><div class="slot-sub" id="sat-cfa3-sub">25-5-25-5 · 100 min focused study</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">10:00–10:30</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Free / flexible</div><div class="slot-sub">Music practice · reading · learning · football videos · friends</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">10:30–11:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wind-down</div><div class="slot-sub">No screens · journal · haircare + skincare PM routine</div></div></div></div>
+      <div class="slot bg-sleep"><div class="slot-time">11:00pm</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Lights out</div></div></div></div>
+    </div>
+    <div class="note">Saturday total CFA: ~6 hrs · Saturday is your heaviest study day — protect the morning blocks.</div>
+  </div>
+
+  <!-- SUNDAY -->
+  <div id="sun" class="day-view">
+    <div class="section-label">Morning — lighter start</div>
+    <div class="timeline">
+      <div class="slot bg-sleep"><div class="slot-time">Before 6:30</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Sleep</div><div class="slot-sub">Allow 6:30 wake up on Sundays — one gentle day</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">6:30–7:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Slow morning</div><div class="slot-sub">Cold plunge, hydration, quick stretch, freshen up, meditation, no rush</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">7:00–10:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 1 — 6 pomodoros</div><div class="slot-sub" id="sun-cfa1-sub">25-5-25-5 · 150 min focused study</div></div></div></div>
+      <div class="slot bg-gym"><div class="slot-time">10:00–11:00</div><div class="slot-content"><div class="dot dot-gym"></div><div><div class="slot-label">Gym or outdoor sport</div><div class="slot-sub">Cricket / tennis / run / crossfit / kegel — something enjoyable</div></div></div></div>
+      <div class="slot bg-hair"><div class="slot-time">11:00–12:00</div><div class="slot-content"><div class="dot dot-hair"></div><div><div class="slot-label">Light weekly reset + rejuvenate routine</div><div class="slot-sub">relaxed breathable skin + hair care · grooming · recharge</div></div></div></div>
+    </div>
+
+    <div class="section-label">Afternoon — study & life review block</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">12:00–1:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Lunch break</div><div class="slot-sub">Family time · cook something different</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">1:00–2:30</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 2 — lighter (3 pomodoros)</div><div class="slot-sub" id="sun-cfa2-sub">Review week's notes · consolidate</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">2:30–4:00</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Weekly planning + life admin</div><div class="slot-sub">Next week prep · finance task · errands</div></div></div></div>
+    </div>
+
+    <div class="section-label">Evening — Recharge & Focus</div>
+    <div class="timeline">
+      <div class="slot bg-free"><div class="slot-time">4:00–7:00</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Rest and recharge</div><div class="slot-sub">Family · friends · movie · music · anything</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Dinner</div><div class="slot-sub">eat properly · recharge for next study session</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">8:00–10:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">CFA block 3 — 4 pomodoros</div><div class="slot-sub" id="sun-cfa3-sub">25-5-25-5 · 100 min focused study</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">10:00–11:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Weekly review + wind-down</div><div class="slot-sub">Brain map check-in · priorities for the week · journal · set Monday intention</div></div></div></div>
+      <div class="slot bg-sleep"><div class="slot-time">11:00pm</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Lights out</div><div class="slot-sub">Protect Monday morning energy</div></div></div></div>
+    </div>
+    <div class="note">Sunday total CFA: ~5.5 hrs · Weekend combined: ~11.5 hrs · Weekly total with 5 weekdays: ~31.5 hrs. Sunday evening weekly review is the keystone habit — 30 mins that keeps the whole system honest.</div>
+  </div>
+
+  <!-- PHASE 2 SUNDAY -->
+  <div id="p2-sun" class="day-view">
+    <div class="section-label">Morning — prep for mock</div>
+    <div class="timeline">
+      <div class="slot bg-sleep"><div class="slot-time">Before 6:30</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Sleep</div><div class="slot-sub">Target: asleep by 11pm, wake by 6:30am</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">6:30–7:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Slow morning</div><div class="slot-sub">Cold plunge, hydration, freshen up, stretch, meditation — calm before the mock</div></div></div></div>
+      <div class="slot bg-gym"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-gym"></div><div><div class="slot-label">Gym / outdoor sport</div><div class="slot-sub">Full session · energise for mock · cricket / run / crossfit</div></div></div></div>
+      <div class="slot bg-hair"><div class="slot-time">8:00–8:30</div><div class="slot-content"><div class="dot dot-hair"></div><div><div class="slot-label">Haircare + skincare AM routine + shower</div><div class="slot-sub">Habit stack with shower post-gym</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">8:30–9:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Breakfast — dedicated</div><div class="slot-sub">Proper meal · no skipping · fuelling for 5 hr mock block</div></div></div></div>
+    </div>
+    <div class="section-label">Mock — exam conditions</div>
+    <div class="timeline">
+      <div class="slot bg-cfa"><div class="slot-time">9:00–11:15</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Mock — Session 1</div><div class="slot-sub">Timed · exam conditions · no interruptions · 135 min</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">11:15–11:45</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Optional break</div><div class="slot-sub">Walk, stretch, light snack — no reviewing answers</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">11:45–2:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Mock — Session 2</div><div class="slot-sub">Timed · exam conditions · no interruptions · 135 min</div></div></div></div>
+    </div>
+    <div class="section-label">Afternoon — reset + analysis</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">2:00–4:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Lunch + reset</div><div class="slot-sub">Proper meal · decompress · no study · mental break</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">4:00–7:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Mock check + analysis</div><div class="slot-sub">Every wrong answer · categorise weak areas · pattern identification · 3 hrs</div></div></div></div>
+    </div>
+    <div class="section-label">Evening — revision + weekly plan</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Dinner</div><div class="slot-sub">Eat properly · recharge</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">8:00–10:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Revision + practice on weak areas</div><div class="slot-sub">Target today's identified weak spots · focused practice</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">10:00–11:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Weekly review + plan</div><div class="slot-sub">Brain map check-in · plan next week's practice around today's weak areas · journal</div></div></div></div>
+      <div class="slot bg-sleep"><div class="slot-time">11:00pm</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Lights out</div><div class="slot-sub">Protect Monday morning energy</div></div></div></div>
+    </div>
+    <div class="note">Phase 2 Sunday · Mock total: 4.5 hrs exam time · Analysis: 3 hrs · Revision: 2 hrs · Total CFA: ~9.5 hrs</div>
+  </div>
+
+  <!-- PHASE 3 MOCK DAY (Tue, Fri, Sun) -->
+  <div id="p3-mock" class="day-view">
+    <div class="section-label">Morning — prep for mock</div>
+    <div class="timeline">
+      <div class="slot bg-sleep"><div class="slot-time">Before 6:30</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Sleep</div><div class="slot-sub">Target: asleep by 11pm, wake by 6:30am</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">6:30–7:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Slow morning</div><div class="slot-sub">Cold plunge, hydration, freshen up, stretch, meditation — calm before the mock</div></div></div></div>
+      <div class="slot bg-gym"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-gym"></div><div><div class="slot-label">Gym / outdoor sport</div><div class="slot-sub">Full session · energise · same morning energy as exam day</div></div></div></div>
+      <div class="slot bg-hair"><div class="slot-time">8:00–8:30</div><div class="slot-content"><div class="dot dot-hair"></div><div><div class="slot-label">Haircare + skincare AM routine + shower</div><div class="slot-sub">Habit stack with shower post-gym</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">8:30–9:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Breakfast — dedicated</div><div class="slot-sub">Same meal as planned for exam day · train the routine</div></div></div></div>
+    </div>
+    <div class="section-label">Mock — exam conditions</div>
+    <div class="timeline">
+      <div class="slot bg-cfa"><div class="slot-time">9:00–11:15</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Mock — Session 1</div><div class="slot-sub">Timed · full exam conditions · 135 min · no interruptions</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">11:15–11:45</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Optional break</div><div class="slot-sub">Walk, stretch, light snack — mirror real exam break behaviour</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">11:45–2:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Mock — Session 2</div><div class="slot-sub">Timed · full exam conditions · 135 min · no interruptions</div></div></div></div>
+    </div>
+    <div class="section-label">Afternoon — reset + deep analysis</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">2:00–4:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Lunch + reset</div><div class="slot-sub">Proper meal · full mental reset · no study</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">4:00–7:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Mock check + deep analysis</div><div class="slot-sub">Every wrong answer · categorise by topic · plan tomorrow's revision focus · 3 hrs</div></div></div></div>
+    </div>
+    <div class="section-label">Evening — targeted revision</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Dinner</div><div class="slot-sub">Eat properly · recharge</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">8:00–10:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Revision on today's weak areas</div><div class="slot-sub">Targeted practice · shore up gaps identified in today's mock</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">10:00–11:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wind-down + set tomorrow's intention</div><div class="slot-sub">Journal · plan tomorrow's revision focus areas · haircare + skincare PM</div></div></div></div>
+      <div class="slot bg-sleep"><div class="slot-time">11:00pm</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Lights out</div></div></div></div>
+    </div>
+    <div class="note">Phase 3 Mock Day (Tue / Fri / Sun) · Mock: 4.5 hrs · Analysis: 3 hrs · Revision: 2 hrs · Total CFA: ~9.5 hrs</div>
+  </div>
+
+  <!-- PHASE 3 REVISION DAY (Mon, Wed, Thu, Sat) -->
+  <div id="p3-rev" class="day-view">
+    <div class="section-label">Morning — deep study</div>
+    <div class="timeline">
+      <div class="slot bg-sleep"><div class="slot-time">Before 6am</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Sleep</div><div class="slot-sub">Target: asleep by 11pm, wake by 6am</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">6:00–6:20</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wake-up ritual</div><div class="slot-sub">Cold plunge, hydration, stretch, freshen up, no phone</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">6:20–9:20</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Study block 1 — 6 pomodoros</div><div class="slot-sub">Targeted revision on weak areas from last mock · 150 min</div></div></div></div>
+      <div class="slot bg-gym"><div class="slot-time">9:20–10:20</div><div class="slot-content"><div class="dot dot-gym"></div><div><div class="slot-label">Gym / exercise</div><div class="slot-sub">Full 60 min session</div></div></div></div>
+      <div class="slot bg-hair"><div class="slot-time">10:20–12:00</div><div class="slot-content"><div class="dot dot-hair"></div><div><div class="slot-label">Haircare + skincare deep routine + shower</div><div class="slot-sub">Oil / mask / treatment — full routine</div></div></div></div>
+    </div>
+    <div class="section-label">Afternoon — practice</div>
+    <div class="timeline">
+      <div class="slot bg-nonneg"><div class="slot-time">12:00–1:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Lunch + rest</div><div class="slot-sub">Proper meal · short mental break</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">1:00–3:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Study block 2 — 4 pomodoros</div><div class="slot-sub">Practice questions on weak areas from last mock · timed · 100 min</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">3:00–5:00</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Free / errands</div><div class="slot-sub">Chores · personal admin · finance tasks · decompress</div></div></div></div>
+    </div>
+    <div class="section-label">Evening — consolidation</div>
+    <div class="timeline">
+      <div class="slot bg-free"><div class="slot-time">5:00–7:00</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Social / fun / music</div><div class="slot-sub">Friends · sport · music · anything that recharges you</div></div></div></div>
+      <div class="slot bg-nonneg"><div class="slot-time">7:00–8:00</div><div class="slot-content"><div class="dot dot-nonneg"></div><div><div class="slot-label">Dinner</div><div class="slot-sub">Family / friends / cook something decent</div></div></div></div>
+      <div class="slot bg-cfa"><div class="slot-time">8:00–10:00</div><div class="slot-content"><div class="dot dot-cfa"></div><div><div class="slot-label">Study block 3 — 4 pomodoros</div><div class="slot-sub">Formula revision · flashcards · Ethics re-read · 100 min</div></div></div></div>
+      <div class="slot bg-free"><div class="slot-time">10:00–10:30</div><div class="slot-content"><div class="dot dot-free"></div><div><div class="slot-label">Free / flexible</div><div class="slot-sub">Music · reading · unwind</div></div></div></div>
+      <div class="slot bg-morning"><div class="slot-time">10:30–11:00</div><div class="slot-content"><div class="dot dot-morning"></div><div><div class="slot-label">Wind-down</div><div class="slot-sub">No screens · journal · skincare PM routine</div></div></div></div>
+      <div class="slot bg-sleep"><div class="slot-time">11:00pm</div><div class="slot-content"><div class="dot dot-sleep"></div><div><div class="slot-label">Lights out</div><div class="slot-sub">Protect energy for next day</div></div></div></div>
+    </div>
+    <div class="note">Phase 3 Revision Day (Mon / Wed / Thu / Sat) · All study goals driven by last mock's weak areas · Total CFA: ~6 hrs</div>
+  </div>
+
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#7F77DD"></div>Rituals / mindset</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#BA7517"></div>CFA study</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#378ADD"></div>Work</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#1D9E75"></div>Gym / health</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#D4537E"></div>Haircare</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#639922"></div>Nutrition / non-negotiables</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#B4B2A9"></div>Free / flexible</div>
+  </div>
+
+</div>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.day-view').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// --- Dates ---
+const examDate  = new Date('2026-08-20');
+const phase2Start = new Date('2026-07-13');
+const phase3Start = new Date('2026-08-03');
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+// --- Countdown ---
+const daysLeft = Math.round((examDate - today) / (1000 * 60 * 60 * 24));
+const el = document.getElementById('days-countdown');
+if (daysLeft > 0) {
+  el.textContent = daysLeft + 'd';
+  document.getElementById('subtitle-countdown').textContent = '~' + daysLeft;
+} else if (daysLeft === 0) {
+  el.textContent = 'Today!';
+  document.getElementById('subtitle-countdown').textContent = '0';
+} else {
+  el.textContent = 'Done ✓';
+  document.getElementById('subtitle-countdown').textContent = '0';
+}
+
+// --- Phase logic ---
+const phases = {
+  1: {
+    label: 'Phase 1',
+    sub: 'Build',
+    wd1:   'Curriculum + integrated practice Qs as they come · 150 min focused study',
+    wd2:   'Curriculum continued · same chronological flow · 100 min',
+    sat1:  '25-5-25-5 · 150 min focused study · next curriculum topics',
+    sat2:  '25-5-25-5 · 100 min focused study · continue curriculum coverage',
+    sat3:  '25-5-25-5 · 100 min focused study',
+    sun1:  'Curriculum progress · cover as much ground as possible · 150 min focused study',
+    sun2:  'Review week\'s curriculum · consolidate concepts · 75 min',
+    sun3:  '25-5-25-5 · 100 min focused study',
+  },
+  2: {
+    label: 'Phase 2',
+    sub: 'Reinforce',
+    wd1:   'Practice questions, timed · exam conditions · CFA leaning ecosystem · 150 min',
+    wd2:   'Weak topic revision · second pass on FRA, Ethics, Equity, Quant · 100 min',
+    sat1:  '25-5-25-5 · timed practice questions · exam conditions · 150 min',
+    sat2:  'topic-wise revision · shore up weak areas · 100 min',
+    sat3:  '25-5-25-5 · 100 min focused question practice',
+    sun1:  'Timed practice Qs · simulate exam morning pressure',
+    sun2:  'Review mistakes from the week · pattern identification',
+    sun3:  '25-5-25-5 · 100 min focused question practice',
+  },
+  3: {
+    label: 'Phase 3',
+    sub: 'Mock & Analyze',
+    wd1:   'Review yesterday\'s mock mistakes · pattern identification',
+    wd2:   'Formula revision · flashcards · Ethics re-read (high yield)',
+    sat1:  'Full mock exam · timed · treat it like exam day',
+    sat2:  'Dissect the mock · identify weak spots · targeted revision',
+    sun1:  'Full mock exam · same start time as real exam',
+    sun2:  'Mock review · flashcards · Ethics consolidation',
+  },
+};
+
+let phase;
+if (today >= phase3Start && today < examDate) phase = 3;
+else if (today >= phase2Start) phase = 2;
+else if (today < examDate) phase = 1;
+else phase = null;
+
+if (phase === 1) {
+  const p = phases[1];
+  document.getElementById('phase-label').textContent = p.label;
+  document.getElementById('phase-sub').textContent = p.sub;
+  document.getElementById('wd-cfa1-sub').textContent = p.wd1;
+  document.getElementById('wd-cfa2-sub').textContent = p.wd2;
+  document.getElementById('sat-cfa1-sub').textContent = p.sat1;
+  document.getElementById('sat-cfa2-sub').textContent = p.sat2;
+  document.getElementById('sat-cfa3-sub').textContent = p.sat3;
+  document.getElementById('sun-cfa1-sub').textContent = p.sun1;
+  document.getElementById('sun-cfa2-sub').textContent = p.sun2;
+  document.getElementById('sun-cfa3-sub').textContent = p.sun3;
+
+} else if (phase === 2) {
+  const p = phases[2];
+  document.getElementById('phase-label').textContent = p.label;
+  document.getElementById('phase-sub').textContent = p.sub;
+  document.getElementById('wd-cfa1-sub').textContent = p.wd1;
+  document.getElementById('wd-cfa2-sub').textContent = p.wd2;
+  document.getElementById('sat-cfa1-sub').textContent = p.sat1;
+  document.getElementById('sat-cfa2-sub').textContent = p.sat2;
+  document.getElementById('sat-cfa3-sub').textContent = p.sat3;
+  // Sunday tab swaps to Phase 2 mock view
+  document.getElementById('tab-bar').innerHTML =
+    '<button class="tab active" onclick="show(\'wd\', this)">Weekday</button>' +
+    '<button class="tab" onclick="show(\'sat\', this)">Saturday</button>' +
+    '<button class="tab" onclick="show(\'p2-sun\', this)">Sunday</button>';
+  document.getElementById('wd').classList.add('active');
+
+} else if (phase === 3) {
+  document.getElementById('phase-label').textContent = 'Phase 3';
+  document.getElementById('phase-sub').textContent = 'Mock & Analyze';
+  // Replace tabs entirely with Mock Day / Revision Day
+  document.getElementById('tab-bar').innerHTML =
+    '<button class="tab active" onclick="show(\'p3-mock\', this)">Mock Day</button>' +
+    '<button class="tab" onclick="show(\'p3-rev\', this)">Revision Day</button>';
+  document.querySelectorAll('.day-view').forEach(d => d.classList.remove('active'));
+  document.getElementById('p3-mock').classList.add('active');
+
+} else {
+  document.getElementById('phase-label').textContent = 'Done ✓';
+  document.getElementById('phase-sub').textContent = 'exam complete';
+}
+</script>
+</body>
+</html>
